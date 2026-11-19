@@ -43,7 +43,7 @@ textarea{min-height:70px;resize:vertical}
 .grp{font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;background:var(--dark);color:#fff;margin:12px -14px 0;padding:6px 14px}
 .photos{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}
 .addph{font-size:14px;font-weight:700;border:1.5px dashed #C9B66B;border-radius:8px;padding:9px 12px;background:#fff;color:var(--ink);position:relative;overflow:hidden}
-.addph input{position:absolute;inset:0;opacity:0;font-size:0}
+.addph input{position:absolute;inset:0;opacity:0;font-size:0}.addph.sec{border-style:solid;border-color:var(--line);font-weight:600;color:var(--muted)}
 .th{position:relative}.th img,.th .vid{width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--line);display:block}
 .th .vid{display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;background:var(--dark);color:var(--brand)}
 .th button{position:absolute;top:-7px;right:-7px;width:22px;height:22px;border-radius:50%;border:0;background:var(--red);color:#fff;font-size:13px;line-height:22px;padding:0}
@@ -86,7 +86,6 @@ textarea{min-height:70px;resize:vertical}
 <div class="card"><div class="eyebrow">Sección 2 · Obligatorio</div><h2>Cotejo de identidad</h2><p class="sub">Escribe lo que ves en el activo. Si un dato no coincide, el activo no se recibe y Activos lo escala.</p><div id="c2"></div><div id="cotRes" style="margin-top:10px"></div></div>
 <div class="card"><div class="eyebrow">Sección 3</div><h2>Documentos y accesorios</h2><p class="sub" id="c3sub"></p><div id="c3"></div></div>
 <div class="card"><div class="eyebrow">Sección 4</div><h2>Condiciones del vehículo</h2><p class="sub">Si contestas “No”, explica qué pasa.</p><div id="c4"></div></div>
-<div class="card"><div class="eyebrow">Sección 5</div><h2>Mapa de daños</h2><p class="sub">Toca un número del dibujo para ir a esa zona.</p><div class="maps" id="maps"></div><div id="c5"></div></div>
 <div class="card"><div class="eyebrow">Sección 6</div><h2>Evidencia fotográfica</h2><p class="sub">La foto del VIN es obligatoria.</p><div id="c6"></div></div>
 <div class="card"><div class="eyebrow">Sección 8</div><h2>Firmas en sitio</h2><p class="sub">Pide al cliente o gestor que firme con el dedo.</p><div id="c8"></div></div>
 <button class="btn dark" id="bDel" style="background:#fff;color:var(--red);border:1px solid var(--line)">Borrar este check list del celular</button>
@@ -119,7 +118,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 const CODE='ACT-FT-003';
 const S1=[{k:'contrato',l:'Número de contrato'},{k:'cliente',l:'Cliente'},{k:'recibe',l:'Quién recibe (puesto y nombre)'},{k:'lugar',l:'Lugar de recepción'},{k:'fecha',l:'Fecha y hora'}];
 const S2=[['serie','Número de serie / VIN'],['motor','Número de motor'],['placas','Placas'],['marca','Marca'],['modelo','Modelo / versión'],['anio','Año'],['color','Color']];
-const S3=['Factura','Tarjeta de circulación','Llaves','Duplicado de llaves','Convenio (devolución, dación o terminación)','Refrendos','Baja de placas','Póliza de seguro'];
+const DOCS=[['Factura',0],['Tarjeta de circulación',1],['Llaves',2],['Duplicado de llaves',3],['Refrendos',5],['Baja de placas',6],['Póliza de seguro',7]];
 const S4=[['Exterior',['Carrocería sin golpes mayores','Parabrisas sin grietas','Vidrios completos','Llantas en buen estado (misma marca)','Faros y calaveras completos','Sin fugas bajo el vehículo']],['Interior',['Tapicería en buen estado','Tablero sin alertas graves','Controles, A/C y estéreo funcionales']],['Mecánica',['Arranca correctamente','Motor sin ruidos anormales','Caja sin golpeteos','Frenos y freno de mano funcionales','Niveles de aceite y anticongelante adecuados']],['Seguridad',['Cinturones funcionales','Luces, direccionales y claxon funcionales']]];
 const ZONES=['Frente (defensa, cofre, faros)','Parabrisas','Toldo','Medallón','Trasera (defensa, cajuela, calaveras)','Costado izquierdo delantero','Costado izquierdo trasero','Costado derecho delantero','Costado derecho trasero','Llantas y rines delanteros','Llantas y rines traseros','Interior'];
 const DMG=['Sin daño','Rayón','Abolladura','Roto / faltante','Golpe mayor'];
@@ -178,7 +177,7 @@ const V=k=>R.data[k]??'';
 const P=k=>R.pre[k]??'';
 const inp=(k,extra='')=>`<input data-k="${k}" value="${esc(V(k))}" ${extra}>`;
 const seg=(k,opts=[['Sí','y'],['No','n']])=>`<div class="seg" data-seg="${k}">${opts.map(([v,c])=>`<button type="button" class="${c} ${V(k)===v?'on':''}" data-v="${v}">${v}</button>`).join('')}</div>`;
-const photo=(k,video)=>`<div class="photos" data-ph="${k}"><span class="thumbs" style="display:contents" data-thumbs="${k}"></span><label class="addph">${video?'🎥 Agregar video':'📷 Agregar foto'}<input type="file" accept="${video?'video/*':'image/*'}" ${video?'':'multiple'} data-photo="${k}"></label></div>`;
+const photo=(k,video)=>`<div class="photos" data-ph="${k}"><span class="thumbs" style="display:contents" data-thumbs="${k}"></span><label class="addph">${video?'🎥 Grabar video':'📷 Tomar foto'}<input type="file" accept="${video?'video/*':'image/*'}" capture="environment" data-photo="${k}"></label><label class="addph sec">🖼 Galería<input type="file" accept="${video?'video/*':'image/*'}" ${video?'':'multiple'} data-photo="${k}"></label></div>`;
 const locked=()=>R.status==='enviado';
 function openForm(rec){R=rec;$('#vHome').classList.add('hide');$('#vForm').classList.remove('hide');$('#bar').classList.remove('hide');$('#bHome').classList.remove('hide');$('#tFolio').textContent=R.id;
  const np=R.origen==='no_programada';
@@ -190,16 +189,13 @@ function openForm(rec){R=rec;$('#vHome').classList.add('hide');$('#vForm').class
   :S1.map(f=>`<label class="l">${f.l}</label><input disabled value="${esc(f.k==='fecha'?fmtDT(P('m_fecha')):P('m_'+f.k))}">`).join(''));
  $('#c2').innerHTML=S2.map(([k,l])=>`<div class="row" data-row="${k}"><div class="rowh"><b>${l}</b><span data-co="${k}"></span></div>${np?'':`<div class="exp">Esperado: <b>${esc(P('c_'+k+'_e')||'—')}</b></div>`}${inp('c_'+k+'_f',`placeholder="Lo que ves en el activo" autocapitalize="characters" autocomplete="off"${k==='anio'?' inputmode="numeric"':''}`)}${inp('c_'+k+'_o','placeholder="Observaciones (opcional)" style="margin-top:6px;border-left-width:1px"')}</div>`).join('')
   +`<div class="row"><div class="rowh"><b>Kilometraje</b><span class="pill p-na">Solo se registra</span></div>${inp('c_km_f','inputmode="numeric" placeholder="Km del tablero"')}</div>`;
- const docs=S3.map((l,i)=>[l,i]).filter(([,i])=>np||P('d'+i+'_a')!=='No');
+ const docs=DOCS.filter(([,i])=>np||P('d'+i+'_a')!=='No');
  $('#c3sub').textContent=np?'Marca lo que el cliente te entregó.':'Solo aparecen los que Activos marcó que aplican.';
- $('#c3').innerHTML=docs.map(([l,i])=>`<div class="row"><div class="rowh"><b>${l}</b>${seg('d'+i+'_r')}</div><div style="display:flex;gap:6px;margin-top:6px"><input data-k="d${i}_c" value="${esc(V('d'+i+'_c'))}" type="number" min="0" inputmode="numeric" placeholder="Cant." style="width:90px;flex:none;border-left-width:1px"><input data-k="d${i}_o" value="${esc(V('d'+i+'_o'))}" placeholder="Observaciones" style="border-left-width:1px"></div></div>`).join('');
+ $('#c3').innerHTML=docs.map(([l,i])=>`<div class="row"><div class="rowh"><b>${l}</b>${seg('d'+i+'_r')}</div><input data-k="d${i}_o" value="${esc(V('d'+i+'_o'))}" placeholder="Observaciones (opcional)" style="margin-top:6px;border-left-width:1px"></div>`).join('');
  let h='',g0='';COND.forEach(c=>{if(c.g!==g0){g0=c.g;h+=`<div class="grp">${c.g}</div>`}h+=`<div class="row" data-cond="${c.k}"><div class="rowh"><span>${c.l}</span>${seg(c.k)}</div><div class="${V(c.k)==='No'?'':'hide'}" data-obs="${c.k}" style="margin-top:6px">${inp(c.k+'_o','placeholder="¿Qué pasa?"')}</div></div>`});$('#c4').innerHTML=h;
- $('#maps').innerHTML=MAPS.join('');
- $('#c5').innerHTML=ZONES.map((z,i)=>{const n=i+1;return`<div class="row" data-zr="${n}"><div class="rowh"><b>${n} · ${z}</b></div><select data-k="zr${n}" style="margin-top:6px">${DMG.map(o=>`<option ${(V('zr'+n)||'Sin daño')===o?'selected':''}>${o}</option>`).join('')}</select><div data-zd="${n}" class="${(V('zr'+n)||'Sin daño')==='Sin daño'?'hide':''}">${inp('zr'+n+'_d','placeholder="Describe el daño" style="margin-top:6px"')}${photo('zr'+n)}</div></div>`}).join('');
  $('#c6').innerHTML=EVID.map(([k,l])=>`<div class="row"><b>${l}</b>${photo('ev_'+k+'_r',k==='video')}</div>`).join('');
  $('#c8').innerHTML=`<label class="l">Entrega · cliente o gestor (nombre)</label>${inp('f_ent_n')}<div class="pad" data-pad="ent"><canvas></canvas><span class="ph">Firma aquí</span><button type="button" class="clr">Borrar</button></div>
   <label class="l">Recibe en sitio · Recuperación (nombre)</label>${inp('f_rec_n')}<div class="pad" data-pad="rec"><canvas></canvas><span class="ph">Firma aquí</span><button type="button" class="clr">Borrar</button></div>`;
- $$('.zone').forEach(g=>g.onclick=()=>{const r=$(`[data-zr="${g.dataset.z}"]`);r.scrollIntoView({behavior:'smooth',block:'center'});r.querySelector('select').focus()});
  Object.keys(R.photos).forEach(renderThumbs);setupPads();
  $$('#vForm input,#vForm select,#vForm textarea').forEach(el=>{if(locked())el.disabled=true});
  $$('#vForm .seg,#vForm .addph,#vForm .clr').forEach(el=>{if(locked())el.style.pointerEvents='none'});
@@ -208,7 +204,7 @@ function openForm(rec){R=rec;$('#vHome').classList.add('hide');$('#vForm').class
 function calc(){const np=R.origen==='no_programada';const cot=S2.map(([k,l])=>{const e=P('c_'+k+'_e'),f=V('c_'+k+'_f');return{k,l,res:np||!e?'na':!f?'pend':norm(e)===norm(f)?'ok':'bad'}});
  const bad=cot.filter(c=>c.res==='bad').length;return{cot,bad,state:np?'na':bad?'bad':cot.some(c=>c.res==='pend')?'pend':'ok'}}
 function missing(){const b=[],np=R.origen==='no_programada';S2.forEach(([k,l])=>{if(!V('c_'+k+'_f'))b.push('Dato físico · '+l)});if(!V('c_km_f'))b.push('Kilometraje');
- S3.forEach((l,i)=>{if((np||P('d'+i+'_a')!=='No')&&!np&&!V('d'+i+'_r'))b.push('¿Se recibió? · '+l)});
+ DOCS.forEach(([l,i])=>{if(!np&&P('d'+i+'_a')!=='No'&&!V('d'+i+'_r'))b.push('¿Se recibió? · '+l)});
  COND.forEach(c=>{if(!V(c.k))b.push(c.l);else if(V(c.k)==='No'&&!String(V(c.k+'_o')).trim())b.push('Explica “'+c.l+'”')});
  if(!(R.photos.ev_vin_r||[]).length)b.push('Foto del VIN');if(!String(V('f_ent_n')).trim())b.push('Nombre de quien entrega');if(!String(V('f_rec_n')).trim())b.push('Nombre de quien recibe en sitio');
  if(np&&!V('np_ligado'))b.push('¿Está ligado a un contrato?');if(np&&V('np_ligado')==='Sí'&&!String(V('m_contrato')).trim())b.push('Número de contrato');if(np&&!String(V('m_cliente')).trim())b.push('Cliente o razón social');
@@ -217,9 +213,8 @@ function refresh(){if(!R)return;const c=calc();
  c.cot.forEach(x=>{const el=$(`[data-co="${x.k}"]`);el.innerHTML=x.res==='ok'?'<span class="pill p-ok">Coincide</span>':x.res==='bad'?'<span class="pill p-bad">No coincide</span>':'';$(`[data-row="${x.k}"]`).style.background=x.res==='bad'?'#FFF7F7':''});
  $('#cotRes').innerHTML=c.state==='na'?'<span class="pill p-na">Activos coteja contra la factura al recibir</span>':c.state==='bad'?`<span class="pill p-bad">NO SE RECIBE · ${c.bad} dato(s) no coinciden</span>`:c.state==='ok'?'<span class="pill p-ok">SE RECIBE · todo coincide</span>':'<span class="pill p-na">Pendiente · faltan datos por cotejar</span>';
  COND.forEach(x=>{const o=$(`[data-obs="${x.k}"]`);o.classList.toggle('hide',V(x.k)!=='No');o.querySelector('input').classList.toggle('need',V(x.k)==='No'&&!String(V(x.k+'_o')).trim())});
- for(let n=1;n<=12;n++){const d=(V('zr'+n)||'Sin daño')!=='Sin daño';$$(`.zone[data-z="${n}"]`).forEach(g=>g.classList.toggle('dmg',d));$(`[data-zd="${n}"]`).classList.toggle('hide',!d)}
  const npC=$('#npC');if(npC)npC.classList.toggle('hide',V('np_ligado')!=='Sí');
- const m=missing();const tot=S2.length+1+COND.length+4;const pct=Math.max(0,Math.round((1-m.length/(tot+ (R.origen==='no_programada'?3:S3.length)))*100));
+ const m=missing();const tot=S2.length+1+COND.length+4;const pct=Math.max(0,Math.round((1-m.length/(tot+ (R.origen==='no_programada'?3:DOCS.length)))*100));
  $('#stBar').innerHTML=locked()?`<b>Enviado</b> ${esc(fmtDT(R.sent))}<br>Puedes volver a compartir el archivo.`:`<b>${m.length?m.length+' pendiente'+(m.length>1?'s':''):'Listo para enviar'}</b><br>Guardado en este celular`;
  $('#bSend').textContent=locked()?'Compartir otra vez':'Enviar a Activos'}
 async function save(){if(!R||locked())return;R.updated=new Date().toISOString();await dbPut(R)}
